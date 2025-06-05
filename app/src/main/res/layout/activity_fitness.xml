@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 顶部：Google 地图碎片，用于显示当前路径 -->
+    <FrameLayout
+        android:id="@+id/mapContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <fragment
+            android:id="@+id/mapFragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- 底部：步数、计时、心率显示和按钮，整个部分只放在一个 ScrollView 内 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- 注意：ScrollView 只能有这一个直接子布局 -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+
+            <!-- 累计步数 -->
+            <TextView
+                android:id="@+id/tvStepCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Steps: 0"
+                android:textSize="24sp"
+                android:layout_marginTop="12dp" />
+
+            <!-- 运动计时 -->
+            <TextView
+                android:id="@+id/tvTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Elapsed Time: 00:00:00"
+                android:textSize="24sp"
+                android:layout_marginTop="8dp" />
+
+            <!-- 新增：实时心率显示 -->
+            <TextView
+                android:id="@+id/tvHeartRate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Heart Rate: -- bpm"
+                android:textSize="24sp"
+                android:layout_marginTop="8dp" />
+
+            <!-- 开始按钮 -->
+            <Button
+                android:id="@+id/btnStart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Start Tracking"
+                android:layout_marginTop="16dp" />
+
+            <!-- 停止按钮 -->
+            <Button
+                android:id="@+id/btnStop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stop Tracking"
+                android:layout_marginTop="8dp"
+                android:enabled="false" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

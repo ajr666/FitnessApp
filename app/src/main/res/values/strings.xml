@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">FitnessApp</string>
+
+    <string-array name="goal_array">
+        <item>build muscle</item>
+        <item>lose fat</item>
+    </string-array>
+
+</resources>
