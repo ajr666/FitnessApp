@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 顶部：Google 地图碎片，用于显示当前路径 -->
+    <!-- Top: Google Map fragment for displaying the current route -->
     <FrameLayout
         android:id="@+id/mapContainer"
         android:layout_width="match_parent"
@@ -19,20 +19,20 @@
             android:layout_height="match_parent" />
     </FrameLayout>
 
-    <!-- 底部：步数、计时、心率显示和按钮，整个部分只放在一个 ScrollView 内 -->
+    <!-- Bottom: Step count, timer, heart rate display, and buttons. All placed inside a single ScrollView -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- 注意：ScrollView 只能有这一个直接子布局 -->
+        <!-- Note: ScrollView can only have one direct child layout -->
         <LinearLayout
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal">
 
-            <!-- 累计步数 -->
+            <!-- Accumulated steps -->
             <TextView
                 android:id="@+id/tvStepCount"
                 android:layout_width="wrap_content"
@@ -41,7 +41,7 @@
                 android:textSize="24sp"
                 android:layout_marginTop="12dp" />
 
-            <!-- 运动计时 -->
+            <!-- Exercise timer -->
             <TextView
                 android:id="@+id/tvTimer"
                 android:layout_width="wrap_content"
@@ -50,7 +50,7 @@
                 android:textSize="24sp"
                 android:layout_marginTop="8dp" />
 
-            <!-- 新增：实时心率显示 -->
+            <!-- New: Real-time heart rate display -->
             <TextView
                 android:id="@+id/tvHeartRate"
                 android:layout_width="wrap_content"
@@ -59,7 +59,7 @@
                 android:textSize="24sp"
                 android:layout_marginTop="8dp" />
 
-            <!-- 开始按钮 -->
+            <!-- Start button -->
             <Button
                 android:id="@+id/btnStart"
                 android:layout_width="match_parent"
@@ -67,7 +67,7 @@
                 android:text="Start Tracking"
                 android:layout_marginTop="16dp" />
 
-            <!-- 停止按钮 -->
+            <!-- Stop button -->
             <Button
                 android:id="@+id/btnStop"
                 android:layout_width="match_parent"

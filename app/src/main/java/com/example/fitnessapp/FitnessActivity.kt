@@ -35,7 +35,7 @@ class FitnessActivity : AppCompatActivity(),
 
     private val TAG = "FitnessActivity"
 
-    // 步数 / 加速度
+    // Step count / Accelerometer
     private lateinit var sensorManager: SensorManager
     private var stepSensor: Sensor? = null
     private var accelSensor: Sensor? = null
@@ -46,7 +46,7 @@ class FitnessActivity : AppCompatActivity(),
     private var lastAccelMagnitude = 0f
     private var stepEstimate = 0
 
-    // 计时
+    // Timer
     private lateinit var tvStepCount: TextView
     private lateinit var tvTimer: TextView
     private var startTimeMs: Long = 0L
@@ -66,7 +66,7 @@ class FitnessActivity : AppCompatActivity(),
         }
     }
 
-    // 地图与定位
+    // Map and Location
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
@@ -74,15 +74,15 @@ class FitnessActivity : AppCompatActivity(),
     private val pathPoints = mutableListOf<LatLng>()
     private var currentPolyline: Polyline? = null
 
-    // 心率监测器
+    // Heart Rate Monitor
     private lateinit var tvHeartRate: TextView
     private var heartRateMonitor: HeartRateMonitor? = null
 
-    // 按钮
+    // Buttons
     private lateinit var btnStart: Button
     private lateinit var btnStop: Button
 
-    // 运行时权限请求 Launcher
+    // Runtime permission request launcher
     private val blePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { perms ->
@@ -103,27 +103,27 @@ class FitnessActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_fitness)
 
-        // —— 绑定 UI 组件 ——
+        // Bind UI components
         tvStepCount = findViewById(R.id.tvStepCount)
         tvTimer = findViewById(R.id.tvTimer)
         tvHeartRate = findViewById(R.id.tvHeartRate)
         btnStart = findViewById(R.id.btnStart)
         btnStop = findViewById(R.id.btnStop)
 
-        // —— 传感器初始化 ——
+        // Sensor initialization
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
-        // —— 地图 / 定位 初始化 ——
+        // Map / Location initialization
         val mapFragment =
             supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest = LocationRequest.create().apply {
-            interval = 5000           // 5 秒请求一次
-            fastestInterval = 2000    // 最快 2 秒更新
+            interval = 5000           // Request every 5 seconds
+            fastestInterval = 2000    // Update as fast as every 2 seconds
             priority = Priority.PRIORITY_HIGH_ACCURACY
         }
 
@@ -137,21 +137,21 @@ class FitnessActivity : AppCompatActivity(),
             }
         }
 
-        // —— 心率监测器 初始化 ——
+        // Heart rate monitor initialization
         heartRateMonitor = HeartRateMonitor(this, object : HeartRateMonitor.HeartRateCallback {
             override fun onHeartRateChanged(hrValue: Int) {
-                // 在主线程更新 UI
+                // Update UI on main thread
                 tvHeartRate.text = "Heart Rate: $hrValue bpm"
             }
         })
 
-        // —— 按钮点击事件 ——
+        // Button click events
         btnStart.setOnClickListener {
-            // 点击“Start Tracking”时，先请求 BLE_SCAN & ACCESS_FINE_LOCATION 权限
+            // When "Start Tracking" is clicked, request BLE_SCAN & ACCESS_FINE_LOCATION permissions
             requestBlePermissions()
         }
         btnStop.setOnClickListener {
-            // 停止所有跟踪：传感器、定位、心率
+            // Stop all tracking: sensors, location, heart rate
             stopTracking()
             heartRateMonitor?.disconnect()
             tvHeartRate.text = "Heart Rate: -- bpm"
@@ -159,10 +159,11 @@ class FitnessActivity : AppCompatActivity(),
     }
 
     /**
-     * 实际启动步数/地图/心率三项跟踪，前提是已经拿到 BLE_SCAN & ACCESS_FINE_LOCATION。
+     * Actually start tracking steps, map, and heart rate.
+     * Assumes BLE_SCAN & ACCESS_FINE_LOCATION permissions are already granted.
      */
     private fun startBleAndTracking() {
-        // —— 步数/加速度注册 ——
+        // Register step/acceleration sensor
         if (stepSensor != null) {
             usingHardwareCounter = true
             baseStepCount = -1f
@@ -184,10 +185,10 @@ class FitnessActivity : AppCompatActivity(),
             )
         } else {
             tvStepCount.text = "No step or accelerometer sensor available"
-            // 但心率和地图仍然可以工作
+            // But heart rate and map can still work
         }
 
-        // —— 地图定位更新 ——
+        // Start location updates
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -200,10 +201,10 @@ class FitnessActivity : AppCompatActivity(),
             )
         }
 
-        // —— 心率扫描 ——
+        // Start heart rate scan
         heartRateMonitor?.startScan()
 
-        // —— 启动计时 ——
+        // Start timer
         startTimeMs = System.currentTimeMillis()
         handler.post(timerRunnable)
 
@@ -213,7 +214,8 @@ class FitnessActivity : AppCompatActivity(),
     }
 
     /**
-     * 点击“Start Tracking”时先调用的入口，检查并请求 BLE_SCAN 与 LOCATION 权限。
+     * Entry point when "Start Tracking" is clicked;
+     * checks and requests BLE_SCAN and LOCATION permissions.
      */
     private fun requestBlePermissions() {
         val toRequest = mutableListOf<String>()
@@ -236,10 +238,10 @@ class FitnessActivity : AppCompatActivity(),
         }
 
         if (toRequest.isNotEmpty()) {
-            // 现在一次性申请所有缺的权限
+            // Now request all missing permissions at once
             blePermissionLauncher.launch(toRequest.toTypedArray())
         } else {
-            // 已全部到位
+            // All permissions are already granted
             startBleAndTracking()
         }
     }
@@ -247,7 +249,7 @@ class FitnessActivity : AppCompatActivity(),
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // 地图上加一个默认起点标记
+        // Add a default starting marker on the map
         val defaultCity = LatLng(47.6062, -122.3321) // Seattle
         mMap.addMarker(
             MarkerOptions()
@@ -256,7 +258,7 @@ class FitnessActivity : AppCompatActivity(),
         )
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultCity, 17f))
 
-        // 打开“我的位置”图层，如果已有权限
+        // Enable "My Location" layer if permission is already granted
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -267,7 +269,8 @@ class FitnessActivity : AppCompatActivity(),
     }
 
     /**
-     * 停止传感器监听、定位更新、计时，以及断开心率连接。
+     * Stop sensor listening, location updates, timer,
+     * and disconnect heart rate monitor.
      */
     private fun stopTracking() {
         isTracking = false
@@ -308,11 +311,11 @@ class FitnessActivity : AppCompatActivity(),
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // 不用处理
+        // No need to handle this
     }
 
     /**
-     * 把每次定位点加入到 pathPoints 并绘制折线
+     * Add each location point to pathPoints and draw polyline
      */
     private fun addLocationPoint(location: Location) {
         val latLng = LatLng(location.latitude, location.longitude)

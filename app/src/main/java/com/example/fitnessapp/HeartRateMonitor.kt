@@ -14,8 +14,8 @@ import androidx.core.content.ContextCompat
 import java.util.*
 
 /**
- * 用于扫描、连接并监听 BLE 心率设备的类。
- * 调用方需要实现 [HeartRateCallback]，以接收实时心率值。
+ * Class for scanning, connecting, and listening to BLE heart rate devices.
+ * The caller must implement [HeartRateCallback] to receive real-time heart rate values.
  */
 class HeartRateMonitor(
     private val context: Context,
@@ -29,7 +29,7 @@ class HeartRateMonitor(
         private val HR_MEASUREMENT_CHAR_UUID: UUID =
             UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb")
 
-        // Client Characteristic Configuration Descriptor（订阅通知所需）
+        // Client Characteristic Configuration Descriptor (required for notification subscription)
         private val CCC_DESCRIPTOR_UUID: UUID =
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
@@ -38,7 +38,7 @@ class HeartRateMonitor(
 
     interface HeartRateCallback {
         /**
-         * 当心率值更新时会回调本方法，hrValue 单位为 bpm
+         * Called when a new heart rate value is received; hrValue is in bpm
          */
         fun onHeartRateChanged(hrValue: Int)
     }
@@ -51,8 +51,8 @@ class HeartRateMonitor(
 
     private val handler = Handler(Looper.getMainLooper())
 
-    // 超时后自动停止扫描（避免无限扫描）
-    private val SCAN_PERIOD: Long = 10000 // 10 秒
+    // Automatically stop scan after timeout to prevent infinite scanning
+    private val SCAN_PERIOD: Long = 10000 // 10 seconds
 
     init {
         val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -60,8 +60,8 @@ class HeartRateMonitor(
     }
 
     /**
-     * 开始扫描附近支持 Heart Rate 服务的 BLE 设备。
-     * 扫描到第一个后会自动停止扫描并发起连接。
+     * Start scanning for nearby BLE devices that support Heart Rate service.
+     * Automatically stops after the first match and initiates connection.
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_SCAN)
     fun startScan() {
@@ -76,7 +76,7 @@ class HeartRateMonitor(
             return
         }
 
-        // 构造过滤器，仅扫描包含 Heart Rate Service UUID 的设备
+        // Filter to scan only devices with Heart Rate Service UUID
         val filter = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid(HR_SERVICE_UUID))
             .build()
@@ -91,7 +91,7 @@ class HeartRateMonitor(
                 Log.i(TAG, "Found device: ${result.device.address}, stopping scan and connecting…")
                 stopScan()
 
-                // 直接连接第一个扫描到的心率设备
+                // Connect to the first heart rate device found
                 connectToDevice(result.device)
             }
 
@@ -101,7 +101,7 @@ class HeartRateMonitor(
             }
         }
 
-        // 在 SCAN_PERIOD 后自动停止扫描
+        // Stop scan automatically after SCAN_PERIOD
         handler.postDelayed({ stopScan() }, SCAN_PERIOD)
 
         bleScanner!!.startScan(listOf(filter), settings, scanCallback)
@@ -109,11 +109,11 @@ class HeartRateMonitor(
     }
 
     /**
-     * 停止 BLE 扫描。
+     * Stop BLE scanning.
      */
     fun stopScan() {
         scanCallback?.let { callback ->
-            // 检查 Android 12+ (API31+) 所需的 BLUETOOTH_SCAN 运行时权限
+            // Check for BLUETOOTH_SCAN permission required on Android 12+
             if (ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.BLUETOOTH_SCAN
@@ -129,7 +129,7 @@ class HeartRateMonitor(
     }
 
     /**
-     * 连接到指定的 BLE 设备，并开始 GATT 发现服务和特征。
+     * Connect to the specified BLE device and start GATT service and characteristic discovery.
      */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun connectToDevice(device: BluetoothDevice) {
@@ -151,15 +151,15 @@ class HeartRateMonitor(
             override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
                 super.onServicesDiscovered(gatt, status)
                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                    // 找到 Heart Rate Service
+                    // Locate the Heart Rate Service
                     val hrService = gatt.getService(HR_SERVICE_UUID)
                     if (hrService != null) {
                         val hrChar = hrService.getCharacteristic(HR_MEASUREMENT_CHAR_UUID)
                         if (hrChar != null) {
-                            // 订阅通知
+                            // Subscribe to notifications
                             val success = gatt.setCharacteristicNotification(hrChar, true)
                             if (success) {
-                                // 写入 CCC Descriptor 来开启通知
+                                // Write CCC descriptor to enable notifications
                                 val descriptor = hrChar.getDescriptor(CCC_DESCRIPTOR_UUID)
                                 descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                                 gatt.writeDescriptor(descriptor)
@@ -211,33 +211,32 @@ class HeartRateMonitor(
     }
 
     /**
-     * 解析 Heart Rate Measurement 特征的 value 字节，得到心率值（bpm）。
-     * 通常第 0 位是 flags，第 1 位是心率（uint8），如果 flag 最高位为 1，则用 uint16。
+     * Parse the value of the Heart Rate Measurement characteristic to get bpm.
+     * Usually, byte[0] is flags; byte[1] is HR in uint8 unless flag's MSB is 1 (then use uint16).
      */
     private fun parseHeartRate(data: ByteArray) {
         if (data.isEmpty()) return
 
-        // flags = data[0] & 0xFF
         val flags = data[0].toInt() and 0xFF
         val hrValue: Int = if (flags and 0x01 == 0) {
-            // 心率存储在第 1 个字节，uint8
+            // HR stored in byte 1 (uint8)
             data[1].toInt() and 0xFF
         } else {
-            // 心率存储在第 1,2 字节，uint16（低字节在前）
+            // HR stored in bytes 1 and 2 (uint16, little-endian)
             ((data[2].toInt() and 0xFF) shl 8) or (data[1].toInt() and 0xFF)
         }
 
-        // 切换到主线程回调更新 UI
+        // Post result to main thread for UI update
         handler.post {
             callback.onHeartRateChanged(hrValue)
         }
     }
 
     /**
-     * 主动断开 GATT 连接并释放资源。
+     * Manually disconnect from GATT and release resources.
      */
     fun disconnect() {
-        // 检查是否拥有 BLUETOOTH_CONNECT 权限
+        // Check BLUETOOTH_CONNECT permission
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.BLUETOOTH_CONNECT
@@ -249,12 +248,12 @@ class HeartRateMonitor(
         }
     }
 
-    /** 断开并释放当前 GATT 连接，置空引用 */
+    /** Disconnect and release current GATT connection */
     @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
     private fun cleanupGatt() {
         bluetoothGatt?.let { gatt ->
             try {
-                gatt.disconnect()  // 这里需要 BLUETOOTH_CONNECT 才能安全调用
+                gatt.disconnect()  // Requires BLUETOOTH_CONNECT permission
                 gatt.close()
             } catch (e: Exception) {
                 Log.w(TAG, "Error while closing GATT", e)
