@@ -6,12 +6,22 @@
     android:layout_height="match_parent"
     android:padding="24dp">
 
+    <ImageView
+        android:id="@+id/coverImage"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/welcome_cover" />
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:gravity="center"
         android:text="Welcome to Smart Fitness and Nutrition Management App"
+        android:textAlignment="center"
         android:textSize="24sp"
         android:textStyle="bold" />
 
@@ -19,14 +29,16 @@
         android:id="@+id/btnFitness"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Fitness"
+        android:text="Fitness          "
         android:textSize="18sp"
-        android:layout_marginBottom="16dp"/>
+        android:textColor="@color/white"
+        android:drawableLeft="@drawable/ic_fitness" />
 
     <Button
         android:id="@+id/btnNutrition"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nutrition Management"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:drawableLeft="@drawable/ic_nutrition"/>
 </LinearLayout>
